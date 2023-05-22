@@ -10,7 +10,7 @@ from . import models
 class AuditedAdmin(admin.ModelAdmin):
 
     """Custom admin to make auditing easier."""
-
+    
     def history_view(self, request, object_id, extra_context=None):
         """On clicking 'History', take admin to the auditlog view for an object."""
         return HttpResponseRedirect(
@@ -48,15 +48,39 @@ class MyHostAdmin(AuditedAdmin):
     """Custom host admin class to use our inlines."""
 
     inlines = [HostIPInline]
+    
+
+class DomainAdmin(admin.ModelAdmin):
+    
+    """Customize the domain search."""
+    
+    search_fields = ["name"]
+    
+
+class DomainApplicationAdmin(admin.ModelAdmin):
+    
+    """Customize the applications listing view."""
+    
+    list_display = ["requested_domain", "status", "creator"]
+    search_fields = ["requested_domain__name"]
+    fieldsets = [
+        (None, {"fields": ["status", "creator", "submitter", "is_policy_acknowledged"]}),
+        ("Organization", {"fields": ["organization_type", "federally_recognized_tribe", "state_recognized_tribe", "tribe_name", "federal_agency", "federal_type", "is_election_board", "organization_name", "type_of_work", "more_organization_information"]}),
+        ("Organization address", {"fields": ["address_line1", "address_line2", "city", "state_territory", "zipcode", "urbanization"]}),
+        ("Authorizing official", {"fields": ["authorizing_official"]}),
+        ("Current websites", {"fields": ["current_websites"]}),
+        ("Domains", {"fields": ["requested_domain", "alternative_domains", "purpose"]}),
+        ("Other", {"fields": ["other_contacts", "no_other_contacts_rationale", "anything_else"]}),
+    ]
 
 
 admin.site.register(models.User, MyUserAdmin)
 admin.site.register(models.UserDomainRole, AuditedAdmin)
 admin.site.register(models.Contact, AuditedAdmin)
 admin.site.register(models.DomainInvitation, AuditedAdmin)
-admin.site.register(models.DomainApplication, AuditedAdmin)
+admin.site.register(models.DomainApplication, DomainApplicationAdmin)
 admin.site.register(models.DomainInformation, AuditedAdmin)
-admin.site.register(models.Domain, AuditedAdmin)
+admin.site.register(models.Domain, DomainAdmin)
 admin.site.register(models.Host, MyHostAdmin)
 admin.site.register(models.Nameserver, MyHostAdmin)
 admin.site.register(models.Website, AuditedAdmin)

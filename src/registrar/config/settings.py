@@ -80,7 +80,7 @@ INSTALLED_APPS = [
     # Django automatic admin interface reads metadata
     # from database models to provide a quick, model-centric
     # interface where trusted users can manage content
-    "django.contrib.admin",
+    
     # vv Required by django.contrib.admin vv
     # the "user" model! *\o/*
     "django.contrib.auth",
@@ -109,6 +109,8 @@ INSTALLED_APPS = [
     "registrar",
     # Our internal API application
     "api",
+    
+    "django.contrib.admin",
 ]
 
 # Middleware are routines for processing web requests.
