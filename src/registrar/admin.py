@@ -1,11 +1,27 @@
+import csv
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.contenttypes.models import ContentType
 from django.http.response import HttpResponseRedirect
 from django.urls import reverse
+from django.http import HttpResponse
 
 from . import models
 
+def export_report(modeladmin, request, queryset):
+    report_data = models.DomainApplication.objects.all()
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="report.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(['Field 1', 'Field 2'])
+    for item in report_data:
+        writer.writerow([item.requested_domain.name, item.submitter])
+
+    return response
+
+export_report.short_description = "Export report"
 
 class AuditedAdmin(admin.ModelAdmin):
 
@@ -50,18 +66,18 @@ class MyHostAdmin(AuditedAdmin):
     inlines = [HostIPInline]
     
 
-class DomainAdmin(admin.ModelAdmin):
+class DomainAdmin(AuditedAdmin):
     
     """Customize the domain search."""
     
     search_fields = ["name"]
     
 
-class DomainApplicationAdmin(admin.ModelAdmin):
+class DomainApplicationAdmin(AuditedAdmin):
     
     """Customize the applications listing view."""
     
-    list_display = ["requested_domain", "status", "creator"]
+    list_display = ["requested_domain", "status", "creator", "created_at"]
     search_fields = ["requested_domain__name"]
     fieldsets = [
         (None, {"fields": ["status", "creator", "submitter", "is_policy_acknowledged"]}),
@@ -72,15 +88,17 @@ class DomainApplicationAdmin(admin.ModelAdmin):
         ("Domains", {"fields": ["requested_domain", "alternative_domains", "purpose"]}),
         ("Other", {"fields": ["other_contacts", "no_other_contacts_rationale", "anything_else"]}),
     ]
+    actions = [export_report]
 
 
 admin.site.register(models.User, MyUserAdmin)
 admin.site.register(models.UserDomainRole, AuditedAdmin)
 admin.site.register(models.Contact, AuditedAdmin)
 admin.site.register(models.DomainInvitation, AuditedAdmin)
-admin.site.register(models.DomainApplication, DomainApplicationAdmin)
 admin.site.register(models.DomainInformation, AuditedAdmin)
-admin.site.register(models.Domain, DomainAdmin)
 admin.site.register(models.Host, MyHostAdmin)
 admin.site.register(models.Nameserver, MyHostAdmin)
 admin.site.register(models.Website, AuditedAdmin)
+
+admin.site.register(models.Domain, DomainAdmin)
+admin.site.register(models.DomainApplication, DomainApplicationAdmin)

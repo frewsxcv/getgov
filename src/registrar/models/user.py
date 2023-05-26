@@ -3,6 +3,8 @@ import logging
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
+from registrar.models.roles import Role
+
 from .domain_invitation import DomainInvitation
 
 from phonenumber_field.modelfields import PhoneNumberField  # type: ignore
@@ -16,6 +18,8 @@ class User(AbstractUser):
     A custom user model that performs identically to the default user model
     but can be customized later.
     """
+    
+    role = models.ForeignKey("registrar.Role", on_delete=models.PROTECT, null=True)
 
     domains = models.ManyToManyField(
         "registrar.Domain",
