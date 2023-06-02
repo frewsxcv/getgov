@@ -81,6 +81,17 @@ class DomainApplicationAdmin(AuditedAdmin):
     
     search_fields = ["requested_domain__name"]
     
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        
+        # Check if the user has the 'view_yourmodel' permission and filter out some objects from the query
+        if not request.user.has_perm('egistrar.domain_application'):
+            return queryset.exclude(submitter__first_name='Michael')
+            
+        return queryset
+    
+    actions = [export_report]
+    
     fieldsets = [
         (None, {"fields": ["status", "creator", "submitter", "is_policy_acknowledged"]}),
         ("Organization", {"fields": ["organization_type", "federally_recognized_tribe", "state_recognized_tribe", "tribe_name", "federal_agency", "federal_type", "is_election_board", "organization_name", "type_of_work", "more_organization_information"]}),
@@ -90,8 +101,6 @@ class DomainApplicationAdmin(AuditedAdmin):
         ("Domains", {"fields": ["requested_domain", "alternative_domains", "purpose"]}),
         ("Other", {"fields": ["other_contacts", "no_other_contacts_rationale", "anything_else"]}),
     ]
-    
-    actions = [export_report]
     
     def get_fieldsets(self, request, obj=None):
         if not request.user.has_perm('registrar.domain_application'):
@@ -103,14 +112,6 @@ class DomainApplicationAdmin(AuditedAdmin):
         # If the user has permission to change the model, show all fields
         return super().get_fieldsets(request, obj)
     
-    def get_queryset(self, request):
-        queryset = super().get_queryset(request)
-        
-        # Check if the user has the 'view_yourmodel' permission and filter out some objects from the query
-        if not request.user.has_perm('egistrar.domain_application'):
-            return queryset.exclude(submitter__first_name='Michael')
-            
-        return queryset
 
 
 admin.site.register(models.User, MyUserAdmin)
