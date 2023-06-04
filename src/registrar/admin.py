@@ -5,6 +5,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.http.response import HttpResponseRedirect
 from django.urls import reverse
 from django.http import HttpResponse
+from django.core.mail import send_mail
 
 from . import models
 
@@ -77,15 +78,18 @@ class DomainApplicationAdmin(AuditedAdmin):
     
     """Customize the applications listing view."""
     
-    list_display = ["requested_domain", "status", "creator", "created_at"]    
+    list_display = ["requested_domain", "status", "creator", "created_at"]  
     
-    search_fields = ["requested_domain__name"]
+    list_filter = ('status', "created_at")  
     
+    search_fields = ["requested_domain__name", "status"]
+
+    # Filter the list
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
         
         # Check if the user has the 'view_yourmodel' permission and filter out some objects from the query
-        if not request.user.has_perm('egistrar.domain_application'):
+        if not request.user.has_perm('registrar.domain_application'):
             return queryset.exclude(submitter__first_name='Michael')
             
         return queryset
@@ -93,7 +97,7 @@ class DomainApplicationAdmin(AuditedAdmin):
     actions = [export_report]
     
     fieldsets = [
-        (None, {"fields": ["status", "creator", "submitter", "is_policy_acknowledged"]}),
+        (None, {"fields": ["status", ("creator", "submitter"), "is_policy_acknowledged"]}),
         ("Organization", {"fields": ["organization_type", "federally_recognized_tribe", "state_recognized_tribe", "tribe_name", "federal_agency", "federal_type", "is_election_board", "organization_name", "type_of_work", "more_organization_information"]}),
         ("Organization address", {"fields": ["address_line1", "address_line2", "city", "state_territory", "zipcode", "urbanization"]}),
         ("Authorizing official", {"fields": ["authorizing_official"]}),
@@ -102,6 +106,17 @@ class DomainApplicationAdmin(AuditedAdmin):
         ("Other", {"fields": ["other_contacts", "no_other_contacts_rationale", "anything_else"]}),
     ]
     
+    # Make some fields read only
+    def get_readonly_fields(self, request, obj=None):
+        # Specify the fields that should be read-only
+        if obj:
+            # Fields to be read-only for existing instances
+            return ('creator', 'submitter', 'is_policy_acknowledged',)
+        else:
+            # Fields to be read-only for new instances
+            pass
+    
+    # Hide some fileds completely based on permissions
     def get_fieldsets(self, request, obj=None):
         if not request.user.has_perm('registrar.domain_application'):
             # If the user doesn't have permission to change the model, show a read-only fieldset
@@ -112,6 +127,23 @@ class DomainApplicationAdmin(AuditedAdmin):
         # If the user has permission to change the model, show all fields
         return super().get_fieldsets(request, obj)
     
+    # Trigger action when a fieldset is changed
+    def save_model(self, request, obj, form, change):
+        if change:  # Check if the object is being edited
+            # Get the original object from the database
+            original_obj = models.DomainApplication.objects.get(pk=obj.pk)
+            
+            if obj.status != original_obj.status:
+                # Field has changed, trigger an action (e.g., send an email)
+                send_mail(
+                    'Status changed',
+                    f'The status for {obj.requested_domain} has been changed from {original_obj.status} to {obj.status}.',
+                    'from@example.com',
+                    ['rachid.mrad@gmail.com'],
+                    fail_silently=False,
+                )
+
+        super().save_model(request, obj, form, change)
 
 
 admin.site.register(models.User, MyUserAdmin)
