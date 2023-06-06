@@ -5,6 +5,7 @@ import logging
 
 from django.apps import apps
 from django.db import models
+from django.core.exceptions import ValidationError
 from django_fsm import FSMField, transition  # type: ignore
 
 from .utility.time_stamped_model import TimeStampedModel
@@ -604,3 +605,7 @@ class DomainApplication(TimeStampedModel):
         for field in opts.many_to_many:
             data[field.name] = field.value_from_object(self)
         return data
+    
+    def clean(self):
+        if self.status == 'investigating' and not self.investigator:
+            raise ValidationError("An investogator is required when status is 'investigating'")

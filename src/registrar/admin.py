@@ -1,4 +1,5 @@
 import csv
+import logging
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.contenttypes.models import ContentType
@@ -6,6 +7,9 @@ from django.http.response import HttpResponseRedirect
 from django.urls import reverse
 from django.http import HttpResponse
 from django.core.mail import send_mail
+from .utility.email import send_templated_email, EmailSendingError
+
+logger = logging.getLogger(__name__)
 
 from . import models
 
@@ -97,7 +101,7 @@ class DomainApplicationAdmin(AuditedAdmin):
     actions = [export_report]
     
     fieldsets = [
-        (None, {"fields": ["status", ("creator", "submitter"), "is_policy_acknowledged"]}),
+        (None, {"fields": ["status", "investigator", ("creator", "submitter"), "is_policy_acknowledged"]}),
         ("Organization", {"fields": ["organization_type", "federally_recognized_tribe", "state_recognized_tribe", "tribe_name", "federal_agency", "federal_type", "is_election_board", "organization_name", "type_of_work", "more_organization_information"]}),
         ("Organization address", {"fields": ["address_line1", "address_line2", "city", "state_territory", "zipcode", "urbanization"]}),
         ("Authorizing official", {"fields": ["authorizing_official"]}),
@@ -111,7 +115,7 @@ class DomainApplicationAdmin(AuditedAdmin):
         # Specify the fields that should be read-only
         if obj:
             # Fields to be read-only for existing instances
-            return ('creator', 'submitter', 'is_policy_acknowledged',)
+            return ('creator', 'is_policy_acknowledged',)
         else:
             # Fields to be read-only for new instances
             pass
@@ -134,14 +138,32 @@ class DomainApplicationAdmin(AuditedAdmin):
             original_obj = models.DomainApplication.objects.get(pk=obj.pk)
             
             if obj.status != original_obj.status:
+                
                 # Field has changed, trigger an action (e.g., send an email)
-                send_mail(
-                    'Status changed',
-                    f'The status for {obj.requested_domain} has been changed from {original_obj.status} to {obj.status}.',
-                    'from@example.com',
-                    ['rachid.mrad@gmail.com'],
-                    fail_silently=False,
-                )
+                
+                # send_mail(
+                #     'Status changed',
+                #     f'The status for {obj.requested_domain} has been changed from {original_obj.status} to {obj.status}.',
+                #     'from@example.com',
+                #     ['rachid.mrad@gmail.com'],
+                #     fail_silently=False,
+                # )
+                
+                if original_obj.submitter is None or original_obj.submitter.email is None:
+                    logger.warning(
+                        "Cannot send confirmation email, no submitter email address."
+                    )
+                    return
+                try:
+                    print(f"original_obj.submitter.email {original_obj.submitter.email}")
+                    send_templated_email(
+                        "emails/submission_confirmation.txt",
+                        "emails/submission_confirmation_subject.txt",
+                        original_obj.submitter.email,
+                        context={"application": self},
+                    )
+                except EmailSendingError:
+                    logger.warning("Failed to send confirmation email", exc_info=True)
 
         super().save_model(request, obj, form, change)
 

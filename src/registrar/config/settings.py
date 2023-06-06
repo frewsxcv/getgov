@@ -249,12 +249,17 @@ DEFAULT_FROM_EMAIL = "registrar@get.gov"
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 
 # TODO: configure these when the values are known
-EMAIL_HOST = "smtp.gmail.com"
-EMAIL_HOST_PASSWORD = "cfojwcnyasqacrva"
-EMAIL_HOST_USER = "rachid.mrad@gmail.com"
-DEFAULT_FROM_EMAIL = 'rachid.mrad@gmail.com'
+# EMAIL_HOST = "smtp.gmail.com"
+# EMAIL_HOST_PASSWORD = "cfojwcnyasqacrva"
+# EMAIL_HOST_USER = "rachid.mrad@gmail.com"
+# DEFAULT_FROM_EMAIL = 'rachid.mrad@gmail.com'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+
+EMAIL_HOST = ""
+EMAIL_HOST_PASSWORD = ""
+EMAIL_HOST_USER = ""
 EMAIL_PORT = 587
-EMAIL_USE_TLS = True
 
 # for mail sent with mail_admins or mail_managers
 EMAIL_SUBJECT_PREFIX = "[Attn: .gov admin] "
