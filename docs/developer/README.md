@@ -81,6 +81,22 @@ The endpoint /admin can be used to view and manage site content, including but n
 
 5. In the browser, navigate to /admins. To verify that all is working correctly, under "domain applications" you should see fake domains with various fake statuses.
 
+## Adding to CODEOWNERS (optional)
+
+The CODEOWNERS file sets the tagged individuals as default reviewers on any Pull Request that changes files that they are marked as owners of.
+
+1. Go to [.github\CODEOWNERS](../../.github/CODEOWNERS)
+2. Following the [CODEOWNERS documentation](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners), add yourself as owner to files that you wish to be automatically requested as reviewer for.
+   
+   For example, if you wish to add yourself as a default reviewer for all pull requests, add your GitHub username to the same line as the `*` designator:  
+
+   ```diff
+   - * @abroddrick
+   + * @abroddrick @YourGitHubUser
+   ```
+
+3. Create a pull request to finalize your changes
+
 ## Viewing Logs
 
 If you run via `docker-compose up`, you'll see the logs in your terminal.
@@ -182,6 +198,8 @@ We use the U.S. Web Design System (USWDS) for styling our applications.
 Static files (images, CSS stylesheets, JavaScripts, etc) are known as "assets".
 
 Assets are stored in `registrar/assets` during development and served from `registrar/public`. During deployment, assets are copied from `registrar/assets` into `registrar/public`. Any assets which need processing, such as USWDS Sass files, are processed before copying.
+
+**Note:** Custom images are added to `/registrar/assets/img/registrar`, keeping them separate from the images copied over by USWDS. However, because the `/img/` directory is listed in `.gitignore`, any files added to `/registrar/assets/img/registrar` will need to be force added (i.e. `git add --force <img-file>`) before they can be deployed. 
 
 We utilize the [uswds-compile tool](https://designsystem.digital.gov/documentation/getting-started/developers/phase-two-compile/) from USWDS to compile and package USWDS assets.
 
